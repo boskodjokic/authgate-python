@@ -1,0 +1,47 @@
+name: Publish
+
+# Publishing is driven by GitHub Releases: cut a release and this ships that tag to PyPI.
+# Authentication is OIDC (PyPI "trusted publishing") — there is no API token to store or rotate.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]" build
+      # PyPI never lets a version number be used twice, even after a delete, so a tag that does not
+      # match the package would either publish the wrong version for good or fail after the release
+      # is already announced.
+      - name: Check the tag matches the package version
+        run: |
+          version=$(python -c "import authgate; print(authgate.__version__)")
+          [ "${GITHUB_REF_NAME#v}" = "$version" ] || { echo "::error::tag $GITHUB_REF_NAME is not version $version"; exit 1; }
+      - run: pytest -q
+      - run: python -m build
+      - run: pip install twine && twine check dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write # required for trusted publishing; nothing else is granted
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
