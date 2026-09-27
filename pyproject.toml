@@ -1,0 +1,60 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "authgate-client"
+dynamic = ["version"]
+description = "Verify AuthGate access tokens in Python, with an optional FastAPI integration."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Bosko Djokic" }]
+keywords = ["authgate", "jwt", "oidc", "jwks", "authentication", "fastapi"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Security",
+    "Typing :: Typed",
+]
+# Every release before 2.13 carries a published advisory (CVE-2026-32597, CVE-2026-48522..48526 among
+# them), and 2.10.0 compared `iss` with a substring match (CVE-2024-53861).
+dependencies = ["pyjwt[crypto]>=2.13"]
+
+[project.optional-dependencies]
+fastapi = ["fastapi>=0.100"]
+dev = ["pytest>=8", "ruff>=0.6", "fastapi>=0.100", "httpx2>=2.0"]
+
+[project.urls]
+Homepage = "https://github.com/boskodjokic/authgate-python"
+Issues = "https://github.com/boskodjokic/authgate-python/issues"
+Server = "https://github.com/boskodjokic/authgate"
+
+[tool.hatch.version]
+path = "src/authgate/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/authgate"]
+
+# An explicit list: hatch honours .gitignore but not .git/info/exclude, where the local-only
+# planning docs are kept out of git, so without it they would ship in the sdist. Anchored with a
+# leading slash — an unanchored pattern matches at any depth, so "tests" or "README.md" nested
+# under docs/ would still be swept in.
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/tests", "/CHANGELOG.md", "/LICENSE", "/README.md", "/pyproject.toml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
