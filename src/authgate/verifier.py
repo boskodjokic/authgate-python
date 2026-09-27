@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from functools import cached_property
 from urllib.parse import urlsplit
 
 import jwt
@@ -109,3 +111,28 @@ class AuthGate:
         except _PARSE_ERRORS as exc:
             raise InvalidTokenError(str(exc)) from exc
         return Identity.from_claims(claims)
+
+    @cached_property
+    def identity(self) -> Callable[..., Identity]:
+        """FastAPI dependency resolving to the verified caller: `Depends(auth.identity)`.
+
+        Cached, so every route sees the same dependency object and FastAPI verifies once per
+        request even when `require()` is stacked on top of it.
+        """
+        return _integration().identity_dependency(self)
+
+    def require(self, resource: str, action: str) -> Callable[..., Identity]:
+        """FastAPI dependency that also demands a permission: `Depends(auth.require("material", "update"))`."""
+        return _integration().require_dependency(self, resource, action)
+
+
+def _integration():
+    try:
+        from . import fastapi
+    except ModuleNotFoundError as exc:
+        if exc.name != "fastapi":
+            raise
+        raise ModuleNotFoundError(
+            'the FastAPI integration needs the extra: pip install "authgate-client[fastapi]"', name="fastapi"
+        ) from exc
+    return fastapi
