@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
@@ -8,13 +8,13 @@ dynamic = ["version"]
 description = "Verify AuthGate access tokens in Python, with an optional FastAPI integration."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Bosko Djokic" }]
 keywords = ["authgate", "jwt", "oidc", "jwks", "authentication", "fastapi"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -34,6 +34,7 @@ dev = ["pytest>=8", "ruff>=0.6", "fastapi>=0.100", "httpx2>=2.0"]
 [project.urls]
 Homepage = "https://github.com/boskodjokic/authgate-python"
 Issues = "https://github.com/boskodjokic/authgate-python/issues"
+Changelog = "https://github.com/boskodjokic/authgate-python/blob/main/CHANGELOG.md"
 Server = "https://github.com/boskodjokic/authgate"
 
 [tool.hatch.version]

@@ -66,6 +66,13 @@ def test_leeway_must_be_a_sane_number_of_seconds(leeway):
         AuthGate(issuer="https://auth.example.com", audience="x", leeway=leeway)
 
 
+def test_issuer_and_audience_are_read_only(auth):
+    with pytest.raises(AttributeError):
+        auth.audience = "https://other-api.example.com"
+    with pytest.raises(AttributeError):
+        auth.issuer = "https://evil.example.com"
+
+
 def test_construction_does_no_io(issuer):
     AuthGate(issuer=issuer.issuer, audience=issuer.audience)
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import KW_ONLY, dataclass, field
 from typing import Any
 
 
@@ -21,6 +21,9 @@ class Identity:
     """
 
     account_id: str
+    # Everything after the account id is keyword-only, so a field added later cannot silently shift
+    # a positional call in someone's code.
+    _: KW_ONLY
     tenant_id: str | None = None
     email: str | None = None
     superuser: bool = False

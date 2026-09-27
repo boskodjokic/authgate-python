@@ -127,6 +127,9 @@ trusted until the verifier can see that it is gone.
 
 All three exceptions derive from `AuthGateError`.
 
+The public API is what `authgate` exports — `AuthGate`, `Identity` and the errors above. The
+submodules are implementation, and may change between releases.
+
 ## Revocation
 
 AuthGate revokes an access token by adding its `jti` to a denylist on the server. A verifier
@@ -138,7 +141,7 @@ JWT-issuing provider behaves this way.
 ## Development
 
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[dev]" "ruff==0.16.9"   # the ruff CI pins
 pytest
 ruff check . && ruff format --check .
 ```

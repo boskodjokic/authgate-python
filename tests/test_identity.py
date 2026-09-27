@@ -64,6 +64,11 @@ def test_a_perms_claim_that_is_not_a_map_grants_nothing():
     assert Identity.from_claims({**CLAIMS, "perms": ["material:read"]}).permissions == {}
 
 
+def test_only_the_account_id_may_be_passed_positionally():
+    with pytest.raises(TypeError):
+        Identity("3f1c", "acme-id")
+
+
 def test_the_same_caller_from_two_tokens_is_equal_and_hashes_alike():
     first = Identity.from_claims(CLAIMS)
     second = Identity.from_claims({**CLAIMS, "jti": "j-2", "iat": 1, "exp": 2})

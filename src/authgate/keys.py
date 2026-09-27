@@ -6,6 +6,7 @@ import json
 import logging
 import threading
 import time
+import urllib.error
 import urllib.request
 from collections.abc import Callable
 from typing import Any
@@ -158,5 +159,9 @@ def _usable_keys(document: Any) -> dict[str, Any]:
 
 def _fetch_json(url: str) -> Any:
     request = urllib.request.Request(url, headers={"Accept": "application/json"})
-    with urllib.request.urlopen(request, timeout=_TIMEOUT_SECONDS) as response:
-        return json.load(response)
+    try:
+        with urllib.request.urlopen(request, timeout=_TIMEOUT_SECONDS) as response:
+            return json.load(response)
+    except urllib.error.HTTPError as exc:
+        exc.close()  # an error status arrives as an exception that still holds the open response
+        raise

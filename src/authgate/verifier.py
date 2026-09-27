@@ -65,17 +65,32 @@ class AuthGate:
         if isinstance(leeway, bool) or not isinstance(leeway, (int, float)) or not 0 <= leeway <= _MAX_LEEWAY_SECONDS:
             raise ConfigurationError(f"leeway must be between 0 and {_MAX_LEEWAY_SECONDS} seconds, got {leeway!r}")
 
-        self.issuer = issuer
-        self.audience = audience
+        self._issuer = issuer
+        self._audience = audience
         self._leeway = leeway
         self._keys = KeyCache(issuer)
+
+    @property
+    def issuer(self) -> str:
+        """The issuer as configured, trailing slash dropped.
+
+        Tokens must carry the discovery document's `issuer` exactly, which is normally this same
+        value. Read-only: the key cache is bound to it at construction.
+        """
+        return self._issuer
+
+    @property
+    def audience(self) -> str:
+        """The `aud` value tokens must name. Read-only, like the issuer."""
+        return self._audience
 
     def verify(self, token: str) -> Identity:
         """Verify `token` and return the caller it describes.
 
         Raises InvalidTokenError for anything wrong with the token, and IssuerUnavailableError when
         the issuer's keys cannot be fetched — including when the key a token names could not be
-        looked up because the issuer is unreachable.
+        looked up because the issuer is unreachable. Raises ConfigurationError if, on first use, the
+        issuer's discovery document turns out to name a different issuer.
         """
         try:
             header = jwt.get_unverified_header(token)
