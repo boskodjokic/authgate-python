@@ -9,10 +9,12 @@ caller.may("material", "update")
 
 from .errors import AuthGateError, ConfigurationError, InvalidTokenError, IssuerUnavailableError
 from .identity import Identity
+from .verifier import AuthGate
 
 __version__ = "0.1.0"
 
 __all__ = [
+    "AuthGate",
     "AuthGateError",
     "ConfigurationError",
     "Identity",
