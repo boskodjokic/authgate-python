@@ -145,7 +145,6 @@ def with_header(header):
 
 
 def deeply_nested_header(issuer):
-    # Deep enough to overflow every supported interpreter's JSON parser: 3.13's copes with 5,000.
     header = b'{"alg":"RS256","kid":"x","a":' + b"[" * 100_000 + b"]" * 100_000 + b"}"
     return f"{b64url(header)}.e30.c2ln"
 
@@ -176,7 +175,6 @@ REJECTED = {
         "Signature verification failed",
     ),
     "tampered payload": (tampered, "Signature verification failed"),
-    "deeply nested header": (deeply_nested_header, "malformed"),
     "not a jwt": (lambda i: "hello", "malformed"),
     "not a string": (lambda i: None, "malformed"),
 }
@@ -206,13 +204,22 @@ def test_an_unreachable_issuer_is_not_reported_as_a_bad_token(issuer, auth):
         auth.verify(issuer.mint())
 
 
-def test_a_parser_recursion_error_while_decoding_is_an_invalid_token(issuer, auth, monkeypatch):
-    # The same PyJWT gap one step later: a header shallow enough to parse once can still overflow
-    # when jwt.decode parses it again, a couple of frames deeper.
+def test_a_deeply_nested_header_is_an_invalid_token_not_a_crash(issuer, auth):
+    # Where the JSON parser gives up depends on the interpreter — 3.13 copes with 5,000 levels, 3.14
+    # with 100,000 — so the reason varies. Only the outcome is pinned: a 401, never a 500.
+    with pytest.raises(InvalidTokenError):
+        auth.verify(deeply_nested_header(issuer))
+
+
+@pytest.mark.parametrize("parser", ["get_unverified_header", "decode"])
+def test_a_recursion_error_in_either_parse_is_an_invalid_token(issuer, auth, monkeypatch, parser):
+    # PyJWT before 2.15 lets a deeply nested header escape json.loads as RecursionError, at the first
+    # parse or — for a header shallow enough to survive that — when jwt.decode parses it again. Forced
+    # here, because whether a real token triggers it depends on the interpreter.
     def overflow(*args, **kwargs):
         raise RecursionError("maximum recursion depth exceeded")
 
-    monkeypatch.setattr(jwt, "decode", overflow)
+    monkeypatch.setattr(jwt, parser, overflow)
 
     with pytest.raises(InvalidTokenError):
         auth.verify(issuer.mint())
